@@ -1,15 +1,18 @@
 import streamlit as st
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
-from sklearn import preprocessing
-from sklearn.preprocessing import MinMaxScaler, LabelEncoder
+from sklearn import metrics, preprocessing
+
+def normalize(scores):
+    max_score = max(scores)
+    return [score / max_score for score in scores]
 
 df = pd.read_csv('study_performance.csv')
 
-st.title('Student Performance Dashboard')
+st.markdown("""
+# Student Performance Dashboard
+Predict your scores based on your personal and study details.
+""")
 
 le_gender = preprocessing.LabelEncoder()
 le_race_ethnicity = preprocessing.LabelEncoder()
@@ -23,7 +26,7 @@ df['parental_level_of_education'] = le_parental_level_of_education.fit_transform
 df['lunch'] = le_lunch.fit_transform(df['lunch'])
 df['test_preparation_course'] = le_test_preparation_course.fit_transform(df['test_preparation_course'])
 
-st.sidebar.header('User Input Features')
+st.sidebar.header('Enter Your Details')
 gender = st.sidebar.selectbox('Gender', list(le_gender.classes_))
 race_ethnicity = st.sidebar.selectbox('Race/Ethnicity', list(le_race_ethnicity.classes_))
 parental_level_of_education = st.sidebar.selectbox('Parental Level of Education', list(le_parental_level_of_education.classes_))
@@ -38,34 +41,86 @@ selected_features = {
     'test_preparation_course': le_test_preparation_course.transform([test_preparation_course])[0]
 }
 
-X = df[['gender', 'race_ethnicity', 'parental_level_of_education', 'lunch', 'test_preparation_course']]
-y = df[['math_score', 'reading_score', 'writing_score']]
+user_math_score = {'math_score': st.sidebar.number_input('Enter your Math Score', min_value=0, max_value=100)}
+user_reading_score = {'reading_score': st.sidebar.number_input('Enter your Reading Score', min_value=0, max_value=100)}
+user_writing_score = {'writing_score': st.sidebar.number_input('Enter your Writing Score', min_value=0, max_value=100)}
 
-scaler = MinMaxScaler().set_output(transform="pandas")
-x_scaled = pd.DataFrame(MinMaxScaler().fit_transform(X), columns = X.columns)
+X = df[['gender', 'race_ethnicity', 'parental_level_of_education', 'lunch', 'test_preparation_course', 'math_score', 'reading_score', 'writing_score']]
 
-X_train, X_test, y_train, y_test = train_test_split(x_scaled, y, test_size=0.2, random_state=24424)
+X_math = pd.concat([X.iloc[:, :-3], X.iloc[:, -2:]], axis=1) # select all columns except writing_score
+y_math = X.iloc[:, -3]
+model_math = LinearRegression().fit(X_math, y_math)
 
-model = LinearRegression()
-model.fit(X_train, y_train)
+X_reading = pd.concat([X.iloc[:, :-2], X.iloc[:, -1:]], axis=1)
+y_reading = X.iloc[:, -2]
+model_reading = LinearRegression().fit(X_reading, y_reading)
 
-prediction = model.predict(pd.DataFrame([selected_features]))
+X_writing = pd.concat([X.iloc[:, :-1]], axis=1)
+y_writing = X.iloc[:, -1]
+model_writing = LinearRegression().fit(X_writing, y_writing)
 
-st.write(f'Predicted Math Score: {prediction[0][0]:.2f}')
-st.write(f'Predicted Reading Score: {prediction[0][1]:.2f}')
-st.write(f'Predicted Writing Score: {prediction[0][2]:.2f}')
+user_input = [selected_features['gender'], selected_features['race_ethnicity'], selected_features['parental_level_of_education'],
+              selected_features['lunch'], selected_features['test_preparation_course']]
+user_input_math = user_input + [user_reading_score['reading_score'], user_writing_score['writing_score']]
+user_input_reading = user_input + [user_math_score['math_score'], user_writing_score['writing_score']]
+user_input_writing = user_input + [user_math_score['math_score'], user_reading_score['reading_score']]
 
-st.subheader('Score Distributions')
-fig, ax = plt.subplots(1, 3, figsize=(15, 5))
-sns.histplot(df['math_score'], kde=True, ax=ax[0])
-ax[0].set_title('Math Score Distribution')
-sns.histplot(df['reading_score'], kde=True, ax=ax[1])
-ax[1].set_title('Reading Score Distribution')
-sns.histplot(df['writing_score'], kde=True, ax=ax[2])
-ax[2].set_title('Writing Score Distribution')
-st.pyplot(fig)
+if user_math_score and user_reading_score and user_writing_score:
+    with st.spinner('Predicting...'):
+        predicted_math_score = min(max(model_math.predict([user_input_math])[0], 0), 100)
+        predicted_reading_score = min(max(model_reading.predict([user_input_reading])[0], 0), 100)
+        predicted_writing_score = min(max(model_writing.predict([user_input_writing])[0], 0), 100)
+    
+    st.subheader('Predicted Scores')
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown(f'**Math Score:** {predicted_math_score:.0f}')
+    with col2:
+        st.markdown(f'**Reading Score:** {predicted_reading_score:.0f}')
+    with col3:
+        st.markdown(f'**Writing Score:** {predicted_writing_score:.0f}')
 
-st.subheader('Correlation Heatmap')
-fig, ax = plt.subplots(figsize=(10, 8))
-sns.heatmap(df.corr(), annot=True, cmap='coolwarm', ax=ax)
-st.pyplot(fig)
+    avg_predicted_score = (predicted_math_score + predicted_reading_score + predicted_writing_score) / 3
+    avg_user_score = (user_math_score['math_score'] + user_reading_score['reading_score'] + user_writing_score['writing_score']) / 3
+    st.write(f'Average Predicted Score: {avg_predicted_score:.0f}')
+    st.write(f'Your Average Score: {avg_user_score:.0f}')
+    
+    st.subheader('Suggestions and insights')
+    if user_math_score['math_score'] > predicted_math_score:
+        st.write('Your math score is above the predicted average. Great job!')
+    elif user_math_score['math_score'] <= predicted_math_score:
+        st.write('Your math score is below the predicted average. Consider additional study.')
+    
+    if user_reading_score['reading_score'] > predicted_reading_score:
+        st.write('Your reading score is above the predicted average. Great job!')
+    elif user_reading_score['reading_score'] <= predicted_reading_score:
+        st.write('Your reading score is below the predicted average. Consider additional study.')
+    
+    if user_writing_score['writing_score'] > predicted_writing_score:
+        st.write('Your writing score is above the predicted average. Great job!')
+    elif user_writing_score['writing_score'] <= predicted_writing_score:
+        st.write('Your writing score is below the predicted average. Consider additional study.')
+        
+# from sklearn.metrics import mean_squared_error, r2_score
+# from sklearn.model_selection import train_test_split
+
+# def display_metrics(model, X_test, y_test, target_name):
+#     y_pred = model.predict(X_test)
+#     mse = mean_squared_error(y_test, y_pred)
+#     r2 = r2_score(y_test, y_pred)
+#     st.write(f'{target_name} Model Performance:')
+#     st.write(f'Mean Squared Error: {mse:.2f}')
+#     st.write(f'R² Score: {r2:.2f}')
+
+# X_train_math, X_test_math, y_train_math, y_test_math = train_test_split(X_math, y_math, test_size=0.2, random_state=24424)
+# X_train_reading, X_test_reading, y_train_reading, y_test_reading = train_test_split(X_reading, y_reading, test_size=0.2, random_state=24424)
+# X_train_writing, X_test_writing, y_train_writing, y_test_writing = train_test_split(X_writing, y_writing, test_size=0.2, random_state=24424)
+
+# model_math.fit(X_train_math, y_train_math)
+# model_reading.fit(X_train_reading, y_train_reading)
+# model_writing.fit(X_train_writing, y_train_writing)
+
+# st.subheader('Model Performance Metrics')
+# display_metrics(model_math, X_test_math, y_test_math, 'Math')
+# display_metrics(model_reading, X_test_reading, y_test_reading, 'Reading')
+# display_metrics(model_writing, X_test_writing, y_test_writing, 'Writing')
