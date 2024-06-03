@@ -71,25 +71,28 @@ avg_scores_combined = df[(df['lunch'] == le_lunch.transform(['standard'])[0]) &
 avg_scores_combined_reduced_none = df[(df['lunch'] == le_lunch.transform(['free/reduced'])[0]) & 
                                       (df['test_preparation_course'] == le_test_preparation_course.transform(['none'])[0])][['math_score', 'reading_score', 'writing_score']].mean()
 
-
-def create_bar_chart(labels, scores1, scores2, name1, name2):
+def create_bar_chart_with_colors(labels, scores1, scores2, name1, name2):
     fig = go.Figure(data=[
-        go.Bar(name=name1, x=labels, y=scores1,
+        go.Bar(name=name1, x=labels, y=scores1, marker=dict(color='rgb(204, 154, 242)'),
                hoverinfo='text', text=[f'{name1}: {score:.2f}' for score in scores1]),
-        go.Bar(name=name2, x=labels, y=scores2,
+        go.Bar(name=name2, x=labels, y=scores2, marker=dict(color='rgb(138, 43, 226)'),
                hoverinfo='text', text=[f'{name2}: {score:.2f}' for score in scores2])
     ])
     fig.update_layout(
         xaxis_title='Subject',
         yaxis_title='Average Score',
-        barmode='group'
+        barmode='group',
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white')
     )
     return fig
 
 categories = ['Math', 'Reading', 'Writing']
-fig_lunch = create_bar_chart(categories, avg_scores_standard, avg_scores_reduced, 'Standard Lunch', 'Free/Reduced Lunch')
-fig_prep_course = create_bar_chart(categories, avg_scores_completed, avg_scores_none, 'Completed Prep', 'No Prep')
-fig_combined = create_bar_chart(categories, avg_scores_combined, avg_scores_combined_reduced_none, 'Standard Lunch & Completed Prep', 'Free/Reduced Lunch & No Prep')
+
+fig_lunch = create_bar_chart_with_colors(categories, avg_scores_standard, avg_scores_reduced, 'Standard Lunch', 'Free/Reduced Lunch')
+fig_prep_course = create_bar_chart_with_colors(categories, avg_scores_completed, avg_scores_none, 'Completed Prep', 'No Prep')
+fig_combined = create_bar_chart_with_colors(categories, avg_scores_combined, avg_scores_combined_reduced_none, 'Standard Lunch & Completed Prep', 'Free/Reduced Lunch & No Prep')
 
 def calculate_percentage_difference(scores1, scores2):
     return (scores1 - scores2) / scores2 * 100
@@ -184,9 +187,9 @@ with tab1:
             st.write(f'**Writing:** {potential_writing_improvement:.2f}')
 
             fig_improvement = go.Figure(data=[
-                go.Bar(name='Current Scores', x=['Math', 'Reading', 'Writing'], y=[user_math_score['math_score'], user_reading_score['reading_score'], user_writing_score['writing_score']],
+                go.Bar(name='Current Scores', x=['Math', 'Reading', 'Writing'], y=[user_math_score['math_score'], user_reading_score['reading_score'], user_writing_score['writing_score']], marker=dict(color='rgb(204, 154, 242)'),
                     hoverinfo='text', text=[f'Current: {score:.2f}' for score in [user_math_score['math_score'], user_reading_score['reading_score'], user_writing_score['writing_score']]]),
-                go.Bar(name='Potential Improvement', x=['Math', 'Reading', 'Writing'], y=[potential_math_improvement, potential_reading_improvement, potential_writing_improvement],
+                go.Bar(name='Potential Improvement', x=['Math', 'Reading', 'Writing'], y=[potential_math_improvement, potential_reading_improvement, potential_writing_improvement],  marker=dict(color='rgb(138, 43, 226)'),
                     hoverinfo='text', text=[f'Improved: {score:.2f}' for score in [potential_math_improvement, potential_reading_improvement, potential_writing_improvement]])
             ])
 
@@ -196,7 +199,6 @@ with tab1:
                 yaxis_title='Score',
                 barmode='group'
             )
-
             st.plotly_chart(fig_improvement)
         else:
             st.write("You already have the best possible conditions for improvement with a standard lunch and completed prep course. Here are some additional tips to further enhance your performance:")
@@ -228,27 +230,3 @@ with tab2:
     st.subheader('Average Performance by Combined Factors')
     st.plotly_chart(fig_combined)
     st.write(f'Percentage Difference: Math: {percent_diff_combined[0]:.2f}%, Reading: {percent_diff_combined[1]:.2f}%, Writing: {percent_diff_combined[2]:.2f}%')
-
-# from sklearn.metrics import mean_squared_error, r2_score
-# from sklearn.model_selection import train_test_split
-
-# def display_metrics(model, X_test, y_test, target_name):
-#     y_pred = model.predict(X_test)
-#     mse = mean_squared_error(y_test, y_pred)
-#     r2 = r2_score(y_test, y_pred)
-#     st.write(f'{target_name} Model Performance:')
-#     st.write(f'Mean Squared Error: {mse:.2f}')
-#     st.write(f'R² Score: {r2:.2f}')
-
-# X_train_math, X_test_math, y_train_math, y_test_math = train_test_split(X_math, y_math, test_size=0.2, random_state=24424)
-# X_train_reading, X_test_reading, y_train_reading, y_test_reading = train_test_split(X_reading, y_reading, test_size=0.2, random_state=24424)
-# X_train_writing, X_test_writing, y_train_writing, y_test_writing = train_test_split(X_writing, y_writing, test_size=0.2, random_state=24424)
-
-# model_math.fit(X_train_math, y_train_math)
-# model_reading.fit(X_train_reading, y_train_reading)
-# model_writing.fit(X_train_writing, y_train_writing)
-
-# st.subheader('Model Performance Metrics')
-# display_metrics(model_math, X_test_math, y_test_math, 'Math')
-# display_metrics(model_reading, X_test_reading, y_test_reading, 'Reading')
-# display_metrics(model_writing, X_test_writing, y_test_writing, 'Writing')
