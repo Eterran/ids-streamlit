@@ -5,9 +5,9 @@ from sklearn import metrics, preprocessing
 import xgboost as xgb
 import plotly.graph_objects as go
 
-def normalize(scores):
-    max_score = max(scores)
-    return [score / max_score for score in scores]
+# def normalize(scores):
+#     max_score = max(scores)
+#     return [score / max_score for score in scores]
 
 df = pd.read_csv('study_performance.csv')
 
@@ -141,8 +141,8 @@ fig_improvement.update_layout(
 with tab1:
     st.markdown("""
     # Student Performance Dashboard
-    Predict your scores based on your personal and study details.
-    """)
+    <span style='color:grey'><i>Predict your scores based on your personal and study details.</i></span>
+    """, unsafe_allow_html=True)
 
     user_input = [selected_features['gender'], selected_features['race_ethnicity'], selected_features['parental_level_of_education'],
                   selected_features['lunch'], selected_features['test_preparation_course']]
@@ -182,15 +182,15 @@ with tab1:
             potential_writing_improvement = min(max(user_writing_score['writing_score'] + avg_improvement_combined[2] if lunch != 'standard' and test_preparation_course != 'completed' else (user_writing_score['writing_score'] + avg_improvement_lunch[2] if lunch != 'standard' else user_writing_score['writing_score'] + avg_improvement_prep[2]), 0), 100)
 
             st.write(f'If you ate standard lunch and completed the preparation course, your scores could increase to:')
-            st.write(f'**Math:** {potential_math_improvement:.2f}')
-            st.write(f'**Reading:** {potential_reading_improvement:.2f}')
-            st.write(f'**Writing:** {potential_writing_improvement:.2f}')
+            st.write(f'**Math:** {potential_math_improvement:.0f}')
+            st.write(f'**Reading:** {potential_reading_improvement:.0f}')
+            st.write(f'**Writing:** {potential_writing_improvement:.0f}')
 
             fig_improvement = go.Figure(data=[
                 go.Bar(name='Current Scores', x=['Math', 'Reading', 'Writing'], y=[user_math_score['math_score'], user_reading_score['reading_score'], user_writing_score['writing_score']], marker=dict(color='rgb(204, 154, 242)'),
-                    hoverinfo='text', text=[f'Current: {score:.2f}' for score in [user_math_score['math_score'], user_reading_score['reading_score'], user_writing_score['writing_score']]]),
+                    hoverinfo='text', text=[f'Current: {score:.0f}' for score in [user_math_score['math_score'], user_reading_score['reading_score'], user_writing_score['writing_score']]]),
                 go.Bar(name='Potential Improvement', x=['Math', 'Reading', 'Writing'], y=[potential_math_improvement, potential_reading_improvement, potential_writing_improvement],  marker=dict(color='rgb(138, 43, 226)'),
-                    hoverinfo='text', text=[f'Improved: {score:.2f}' for score in [potential_math_improvement, potential_reading_improvement, potential_writing_improvement]])
+                    hoverinfo='text', text=[f'Improved: {score:.0f}' for score in [potential_math_improvement, potential_reading_improvement, potential_writing_improvement]])
             ])
 
             fig_improvement.update_layout(
