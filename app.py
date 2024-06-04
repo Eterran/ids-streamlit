@@ -3,7 +3,11 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn import metrics, preprocessing
 import xgboost as xgb
+import matplotlib.pyplot as plt
 import plotly.graph_objects as go
+import matplotlib.patches as patches
+import mpld3
+import base64
 
 def normalize(scores):
     max_score = max(scores)
@@ -71,11 +75,11 @@ avg_scores_combined = df[(df['lunch'] == le_lunch.transform(['standard'])[0]) &
 avg_scores_combined_reduced_none = df[(df['lunch'] == le_lunch.transform(['free/reduced'])[0]) & 
                                       (df['test_preparation_course'] == le_test_preparation_course.transform(['none'])[0])][['math_score', 'reading_score', 'writing_score']].mean()
 
-def create_bar_chart_with_colors(labels, scores1, scores2, name1, name2):
+def create_bar_chart_with_colors(labels, scores1, scores2, name1, name2, color1, color2):
     fig = go.Figure(data=[
-        go.Bar(name=name1, x=labels, y=scores1, marker=dict(color='rgb(204, 154, 242)'),
+        go.Bar(name=name1, x=labels, y=scores1, marker=dict(color=color1),
                hoverinfo='text', text=[f'{name1}: {score:.2f}' for score in scores1]),
-        go.Bar(name=name2, x=labels, y=scores2, marker=dict(color='rgb(138, 43, 226)'),
+        go.Bar(name=name2, x=labels, y=scores2, marker=dict(color=color2),
                hoverinfo='text', text=[f'{name2}: {score:.2f}' for score in scores2])
     ])
     fig.update_layout(
@@ -90,9 +94,9 @@ def create_bar_chart_with_colors(labels, scores1, scores2, name1, name2):
 
 categories = ['Math', 'Reading', 'Writing']
 
-fig_lunch = create_bar_chart_with_colors(categories, avg_scores_standard, avg_scores_reduced, 'Standard Lunch', 'Free/Reduced Lunch')
-fig_prep_course = create_bar_chart_with_colors(categories, avg_scores_completed, avg_scores_none, 'Completed Prep', 'No Prep')
-fig_combined = create_bar_chart_with_colors(categories, avg_scores_combined, avg_scores_combined_reduced_none, 'Standard Lunch & Completed Prep', 'Free/Reduced Lunch & No Prep')
+fig_lunch = create_bar_chart_with_colors(categories, avg_scores_standard, avg_scores_reduced, 'Standard Lunch', 'Free/Reduced Lunch', 'rgb(0, 0, 226)', 'rgb(108, 178, 255)')
+fig_prep_course = create_bar_chart_with_colors(categories, avg_scores_completed, avg_scores_none, 'Completed Prep', 'No Prep', 'rgb(0, 200, 0)', 'rgb(153, 255, 153)')
+fig_combined = create_bar_chart_with_colors(categories, avg_scores_combined, avg_scores_combined_reduced_none, 'Standard Lunch & Completed Prep', 'Free/Reduced Lunch & No Prep', 'rgb(255, 51, 51)', 'rgb(255, 153, 153)')
 
 def calculate_percentage_difference(scores1, scores2):
     return (scores1 - scores2) / scores2 * 100
