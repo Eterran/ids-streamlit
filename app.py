@@ -5,10 +5,6 @@ from sklearn import metrics, preprocessing
 import xgboost as xgb
 import plotly.graph_objects as go
 
-# def normalize(scores):
-#     max_score = max(scores)
-#     return [score / max_score for score in scores]
-
 df = pd.read_csv('study_performance.csv')
 
 le_gender = preprocessing.LabelEncoder()
@@ -139,9 +135,34 @@ fig_improvement.update_layout(
 )
 
 with tab1:
+    st.subheader('Beyond Limits: Unlock Your Potential and Achieve Your Dreams')
     st.markdown("""
-    # Student Performance Dashboard
-    <span style='color:grey'><i>Predict your scores based on your personal and study details.</i></span>
+    # Student Performance Analyzer
+    Curious on how to boost your academic performance and achieve higher test scores? 
+    What factors will affect your test score? Gender?
+    Are boys better at math while girls better at reading and writing?
+
+    Boys scored an average of 9 marks higher than girls in mathematics across OECD countries, while girls scored an average of 24 marks higher than boys in reading. -PISA (2022)
+
+    There are more factors that will affect your test scores!
+    """, unsafe_allow_html=True)
+    
+    st.subheader('Why a Student Performance Analyzer ?')
+    st.markdown("""
+    - Personalized Insights: Discover how your unique background, lunch type, parental education level, and test preparation impact your scores in math, writing, and reading. 
+    - Identify Patterns: Uncover trends and correlations that can inform strategies to improve your scores.
+    - Boost Performance: Gain actionable insights to enhance your study habits and overall performance.
+    """, unsafe_allow_html=True)
+    
+    st.subheader('Small guidelines: ')
+    st.markdown("""
+    1. Input Your Scores: Enter your math, writing, or reading scores.
+    2. Provide Background Information: Share details about your gender, lunch type, parental education level, and test preparation status.
+    """, unsafe_allow_html=True)
+    st.markdown("""
+    You are done! 
+
+    Start now and see how small changes can lead to significant improvements in your test scores!
     """, unsafe_allow_html=True)
 
     user_input = [selected_features['gender'], selected_features['race_ethnicity'], selected_features['parental_level_of_education'],
