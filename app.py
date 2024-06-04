@@ -3,11 +3,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn import metrics, preprocessing
 import xgboost as xgb
-import matplotlib.pyplot as plt
 import plotly.graph_objects as go
-import matplotlib.patches as patches
-import mpld3
-import base64
 
 def normalize(scores):
     max_score = max(scores)
